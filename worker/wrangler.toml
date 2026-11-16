@@ -1,0 +1,13 @@
+name = "fridgecig-kroger-proxy"
+main = "src/index.ts"
+compatibility_date = "2024-02-01"
+
+# Environment Variables & Secrets
+# Set these using wrangler secret put:
+# - KROGER_CLIENT_ID
+# - KROGER_CLIENT_SECRET
+#
+# Optional KV namespace for distributed caching across edge points:
+# [[kv_namespaces]]
+# binding = "CACHE"
+# id = "your-kv-namespace-id"
