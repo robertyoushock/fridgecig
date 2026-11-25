@@ -7,9 +7,21 @@ import {
   SINGLE_SERVE_MATRIX,
   BULK_DEALS,
   REFERENCE_CONSTANTS,
+  ZIP_COORDS,
+  METRO_HUBS,
+  NATIONAL_FALLBACK_COORDS,
+  type BulkDeal,
 } from '@/data/store-matrix'
-import type { BurnResult, StashResult, BulkPackTier, TickerData, IndexData, PuristMode } from '@/types'
-import { estimateWalkTime, getAppleMapsUrl, getGoogleMapsUrl } from '@/lib/geolocation'
+import type {
+  BurnResult,
+  StashResult,
+  BulkPackTier,
+  TickerData,
+  IndexData,
+  PuristMode,
+  ZipResolution,
+} from '@/types'
+import { estimateWalkTime, getAppleMapsUrl, getGoogleMapsUrl, getDistanceMiles } from '@/lib/geolocation'
 import { findLocalKingSoopers } from '@/lib/kroger'
 
 // ---------------------------------------------------------------------------
@@ -61,7 +73,66 @@ const NEIGHBORHOOD_LOOKUP: NeighborhoodEntry[] = [
   { latRange: [39.9, 40.1], lngRange: [-75.3, -75.0], label: 'Fishtown, Philadelphia' },
 ]
 
-export function getNeighborhoodLabel(lat: number, lng: number): string {
+function getMetroHubKeyFromZip(cleanZip: string): string | null {
+  if (cleanZip.startsWith('80') || cleanZip.startsWith('81')) return 'denver'
+  if (/^(10[0-9]|11[0-4])/.test(cleanZip)) return 'manhattan'
+  if (cleanZip.startsWith('606')) return 'chicago'
+  if (cleanZip.startsWith('787')) return 'austin'
+  if (cleanZip.startsWith('900') || cleanZip.startsWith('901') || cleanZip.startsWith('902')) return 'los-angeles'
+  if (cleanZip.startsWith('981')) return 'seattle'
+  if (cleanZip.startsWith('331')) return 'miami'
+  return null
+}
+
+export function resolveZipTarget(zip: string): ZipResolution {
+  const clean = zip.trim().slice(0, 5)
+  const exactEntry = ZIP_COORDS[clean]
+  if (exactEntry) {
+    const matchedHubKey =
+      Object.entries(METRO_HUBS).find(([, hub]) => hub.zip === clean)?.[0] ?? ''
+    return {
+      zip: clean,
+      coords: { lat: exactEntry.lat, lng: exactEntry.lng },
+      label: exactEntry.label,
+      hubKey: matchedHubKey,
+      status: 'exact',
+      warning: null,
+    }
+  }
+
+  const metroHubKey = getMetroHubKeyFromZip(clean)
+  if (metroHubKey && METRO_HUBS[metroHubKey]) {
+    const hub = METRO_HUBS[metroHubKey]
+    return {
+      zip: clean,
+      coords: hub.coords,
+      label: `ZIP ${clean} (${hub.name} Metro Estimate)`,
+      hubKey: '',
+      status: 'metro_estimate',
+      warning: `ZIP ${clean} isn't in our block-level directory — showing ${hub.name} metro pricing.`,
+    }
+  }
+
+  return {
+    zip: clean,
+    coords: NATIONAL_FALLBACK_COORDS,
+    label: `ZIP ${clean} (National Baseline)`,
+    hubKey: '',
+    status: 'national_fallback',
+    warning: `ZIP ${clean} is outside mapped metro hubs — showing national baseline (Walmart / Costco) instead.`,
+  }
+}
+
+export function getNeighborhoodLabel(lat: number, lng: number, zip?: string): string {
+  if (zip) {
+    const cleanZip = zip.trim().slice(0, 5)
+    if (ZIP_COORDS[cleanZip]) {
+      return ZIP_COORDS[cleanZip].label
+    }
+    if (/^\d{5}$/.test(cleanZip)) {
+      return resolveZipTarget(cleanZip).label
+    }
+  }
   for (const n of NEIGHBORHOOD_LOOKUP) {
     if (
       lat >= n.latRange[0] &&
@@ -77,13 +148,17 @@ export function getNeighborhoodLabel(lat: number, lng: number): string {
 
 function resolveRegionHints(lat: number, lng: number, zip?: string): string[] {
   if (zip) {
-    if (zip.startsWith('80')) return ['denver', 'colorado']
-    if (zip.startsWith('100') || zip.startsWith('101') || zip.startsWith('102')) return ['manhattan', 'nyc', 'new-york']
-    if (zip.startsWith('606')) return ['chicago']
-    if (zip.startsWith('900') || zip.startsWith('902')) return ['los-angeles', 'la', 'california']
-    if (zip.startsWith('787')) return ['austin', 'texas']
-    if (zip.startsWith('981')) return ['seattle', 'pacific-northwest']
-    if (zip.startsWith('331')) return ['miami', 'florida']
+    const clean = zip.trim()
+    if (clean.length >= 2) {
+      if (clean.startsWith('80') || clean.startsWith('81')) return ['denver', 'colorado']
+      if (/^(10[0-9]|11[0-4])/.test(clean)) return ['manhattan', 'nyc', 'new-york']
+      if (clean.startsWith('606')) return ['chicago']
+      if (clean.startsWith('900') || clean.startsWith('901') || clean.startsWith('902')) return ['los-angeles', 'la', 'california']
+      if (clean.startsWith('787')) return ['austin', 'texas']
+      if (clean.startsWith('981')) return ['seattle', 'pacific-northwest']
+      if (clean.startsWith('331')) return ['miami', 'florida']
+      return ['national']
+    }
   }
 
   if (lat >= 39.5 && lat <= 40.2 && lng >= -105.4 && lng <= -104.6) return ['denver', 'colorado']
@@ -105,9 +180,14 @@ export function findBestBurn(
   lat: number,
   lng: number,
   mode: PuristMode = 'anything',
+  zip?: string,
 ): BurnResult {
-  const storeKeys = Object.keys(SINGLE_SERVE_MATRIX)
-  const candidateKeys = ['mcdonalds', 'circle-k', '7-eleven', 'wendys', 'conoco', 'racetrac', 'bodega']
+  const regionHints = resolveRegionHints(lat, lng, zip)
+  const candidateKeys = Object.entries(SINGLE_SERVE_MATRIX)
+    .filter(([, store]) =>
+      store.regions.includes('national') || store.regions.some((r) => regionHints.includes(r)),
+    )
+    .map(([key]) => key)
 
   interface ScoredOption {
     key: string
@@ -119,7 +199,7 @@ export function findBestBurn(
     oz: number
   }
 
-  let candidates: ScoredOption[] = []
+  const candidates: ScoredOption[] = []
 
   for (const key of candidateKeys) {
     const store = SINGLE_SERVE_MATRIX[key]
@@ -128,11 +208,17 @@ export function findBestBurn(
     for (let si = 0; si < store.sizes.length; si++) {
       const s = store.sizes[si]
       const sizeLower = s.size.toLowerCase()
-      const isFountain = sizeLower.includes('fountain') || sizeLower.includes('gulp') || sizeLower.includes('polar')
-      const isCanOrBottle = sizeLower.includes('can') || sizeLower.includes('bottle')
+      const isCan = sizeLower.includes('can') && !sizeLower.includes('bottle')
+      const isFountain =
+        sizeLower.includes('fountain') ||
+        sizeLower.includes('gulp') ||
+        sizeLower.includes('polar') ||
+        ((store.type === 'mcdonalds' || store.type === 'fast_food') &&
+          !sizeLower.includes('bottle') &&
+          !sizeLower.includes('can'))
 
       if (mode === 'fountain' && !isFountain) continue
-      if (mode === 'can' && !isCanOrBottle) continue
+      if (mode === 'can' && !isCan) continue
 
       const priceVariance = seededVariance(lat, lng, key.length + si, 0.15)
       const finalPrice = Math.max(0.69, Math.round((s.price + priceVariance) * 100) / 100)
@@ -152,20 +238,37 @@ export function findBestBurn(
   }
 
   candidates.sort((a, b) => a.unitCostPerOz - b.unitCostPerOz)
-  const best = candidates[0] || {
-    key: 'mcdonalds',
-    sizeIdx: 2,
-    unitCostPerOz: 0.05,
-    price: 1.49,
-    distance: 0.4,
-    size: 'Large (30oz)',
-    oz: 30,
-  }
+  const best =
+    candidates[0] ||
+    (mode === 'can'
+      ? {
+          key: 'bodega',
+          sizeIdx: 1,
+          unitCostPerOz: 1.75 / 12,
+          price: 1.75,
+          distance: 0.4,
+          size: '12oz Can',
+          oz: 12,
+        }
+      : {
+          key: 'mcdonalds',
+          sizeIdx: 2,
+          unitCostPerOz: 0.05,
+          price: 1.49,
+          distance: 0.4,
+          size: 'Large (30oz)',
+          oz: 30,
+        })
 
+  const second = candidates.find((c) => c.key !== best.key) ?? null
   const store = SINGLE_SERVE_MATRIX[best.key]
+  const secondStore = second ? SINGLE_SERVE_MATRIX[second.key] : null
   const isGoldStandard = (best.key === 'mcdonalds' || store.type === 'mcdonalds') && best.distance <= 1.2
   const googleUrl = getGoogleMapsUrl(store.name, lat, lng, 'walking')
   const appleUrl = getAppleMapsUrl(store.name, lat, lng, 'walking')
+  const bottleUnitOz = REFERENCE_CONSTANTS.BODEGA_SINGLE_BOTTLE_PRICE / 20
+  const vsBottleSpread = Math.round(((best.unitCostPerOz - bottleUnitOz) / bottleUnitOz) * 1000) / 10
+  const caffeineMg = Math.round((best.oz / 12) * REFERENCE_CONSTANTS.CAFFEINE_MG_PER_12OZ)
 
   return {
     price: best.price,
@@ -180,6 +283,18 @@ export function findBestBurn(
     apple_maps_url: appleUrl,
     google_maps_url: googleUrl,
     gold_standard: isGoldStandard,
+    vs_bottle_spread: vsBottleSpread,
+    caffeine_mg: caffeineMg,
+    runner_up:
+      second && secondStore
+        ? {
+            store_name: secondStore.name,
+            size: second.size,
+            price: second.price,
+            formatted_price: `$${second.price.toFixed(2)}`,
+            unit_cost_per_oz: Math.round(second.unitCostPerOz * 1000) / 1000,
+          }
+        : null,
   }
 }
 
@@ -199,37 +314,60 @@ export function findBestStash(lat: number, lng: number, zip?: string): StashResu
     matchingDeals = matchingDeals.filter((d) => !d.regions.includes('national'))
   }
 
-  if (regionHints.includes('denver') || regionHints.includes('colorado')) {
+  const isDenver = regionHints.includes('denver') || regionHints.includes('colorado')
+  const haversineDeals = new Set<BulkDeal>()
+
+  if (isDenver) {
     const ks = findLocalKingSoopers(lat, lng, zip)
     const ksAddress = `${ks.address}, ${ks.city}, ${ks.state} ${ks.zip}`
+    const ksDist = Math.max(0.1, getDistanceMiles(lat, lng, ks.lat, ks.lng))
+    const costcoDenverDist = Math.max(0.1, getDistanceMiles(lat, lng, 39.7089, -105.0156))
     matchingDeals = matchingDeals.map((d) => {
       if (d.store.toLowerCase().includes('king soopers')) {
-        return {
+        const updated = {
           ...d,
           store: ks.name,
           store_address: ksAddress,
+          distance_mi: ksDist,
         }
+        haversineDeals.add(updated)
+        return updated
+      }
+      if (d.store.toLowerCase().includes('costco')) {
+        const updated = {
+          ...d,
+          distance_mi: costcoDenverDist,
+        }
+        haversineDeals.add(updated)
+        return updated
       }
       return d
     })
   }
 
   interface ScoredDeal {
-    deal: (typeof BULK_DEALS)[number]
+    deal: BulkDeal
     perCan: number
     distance: number
   }
 
+  const dealDistances = new Map<BulkDeal, number>()
   const scored: ScoredDeal[] = matchingDeals.map((deal, i) => {
     const perCan = deal.effective_per_can ?? deal.price / deal.cans
-    const distVariance = seededVariance(lat, lng, 50 + i, 0.4)
-    const adjustedDist = Math.round(Math.max(0.3, deal.distance_mi + distVariance) * 10) / 10
+    let adjustedDist: number
+    if (haversineDeals.has(deal)) {
+      adjustedDist = deal.distance_mi
+    } else {
+      const distVariance = seededVariance(lat, lng, 50 + i, 0.4)
+      adjustedDist = Math.round(Math.max(0.3, deal.distance_mi + distVariance) * 10) / 10
+    }
+    dealDistances.set(deal, adjustedDist)
     return { deal, perCan, distance: adjustedDist }
   })
 
   scored.sort((a, b) => a.perCan - b.perCan)
 
-  const best = scored[0] || { deal: BULK_DEALS[0], perCan: 0.42, distance: 1.1 }
+  const best = scored[0] || { deal: BULK_DEALS[0], perCan: 0.42, distance: dealDistances.get(BULK_DEALS[0]) ?? 1.1 }
   const runnerUp = scored.length > 1 ? scored[1] : null
 
   const caffeinePerMg = best.perCan / REFERENCE_CONSTANTS.CAFFEINE_MG_PER_12OZ
@@ -240,7 +378,7 @@ export function findBestStash(lat: number, lng: number, zip?: string): StashResu
   const appleUrl = getAppleMapsUrl(storeQuery, lat, lng, 'driving')
 
   function buildTier(
-    deal: (typeof BULK_DEALS)[number],
+    deal: BulkDeal,
     format: '12pk' | '24pk' | 'costco',
     label: string,
     isBest: boolean
@@ -256,6 +394,13 @@ export function findBestStash(lat: number, lng: number, zip?: string): StashResu
       ? `$${upfrontCost.toFixed(2)} (${minUnits} pks req)`
       : `$${upfrontCost.toFixed(2)} upfront`
 
+    let tierDist = dealDistances.get(deal)
+    if (tierDist === undefined) {
+      const fallbackVar = seededVariance(lat, lng, 77, 0.4)
+      tierDist = Math.round(Math.max(0.3, deal.distance_mi + fallbackVar) * 10) / 10
+      dealDistances.set(deal, tierDist)
+    }
+
     return {
       format,
       label,
@@ -269,7 +414,7 @@ export function findBestStash(lat: number, lng: number, zip?: string): StashResu
       caffeine_cost_per_mg: caffeine,
       vs_bodega_spread: spread,
       deal_badge: deal.deal_badge,
-      distance_mi: deal.distance_mi,
+      distance_mi: tierDist,
       maps_url: getGoogleMapsUrl(query, lat, lng, 'driving'),
       apple_maps_url: getAppleMapsUrl(query, lat, lng, 'driving'),
       google_maps_url: getGoogleMapsUrl(query, lat, lng, 'driving'),
@@ -301,21 +446,7 @@ export function findBestStash(lat: number, lng: number, zip?: string): StashResu
   const costcoDeal =
     matchingDeals.find((d) => d.store.toLowerCase().includes('costco')) ??
     BULK_DEALS.find((d) => d.store.toLowerCase().includes('costco') && d.regions.includes('national')) ??
-    {
-      store: 'Costco Wholesale (Denver Central)',
-      pack_desc: '36-Pack Cans',
-      price: 17.49,
-      cans: 36,
-      oz_per_can: 12,
-      deal_badge: '🏪 MEMBERS ONLY — CLUB BENCHMARK ($0.49/can)',
-      deal_desc: 'Costco Wholesale 36-Can Flat',
-      effective_per_can: 0.49,
-      min_units: 1,
-      upfront_cost: 17.49,
-      regions: ['denver', 'colorado'],
-      distance_mi: 3.8,
-      store_address: '400 S Zuni St, Denver, CO 80223',
-    }
+    null
 
   const pack12Tier = best12Deal ? buildTier(best12Deal, '12pk', '12-Pack', best12Deal === best.deal) : undefined
   const pack24Tier = best24Deal ? buildTier(best24Deal, '24pk', '24-Pack', best24Deal === best.deal) : undefined
@@ -370,9 +501,9 @@ export function getIndexData(
   mode: PuristMode = 'anything',
   zip?: string,
 ): IndexData {
-  const burn = findBestBurn(lat, lng, mode)
+  const burn = findBestBurn(lat, lng, mode, zip)
   const stash = findBestStash(lat, lng, zip)
-  const label = getNeighborhoodLabel(lat, lng)
+  const label = getNeighborhoodLabel(lat, lng, zip)
 
   const ticker: TickerData = {
     spot_price_per_oz: burn.unit_cost_per_oz,

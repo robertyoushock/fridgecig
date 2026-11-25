@@ -2,9 +2,74 @@
 // GEOLOCATION & MAPS ROUTING INTELLIGENCE
 // ═══════════════════════════════════════════════════════════════════
 
-export interface Coords {
-  lat: number
-  lng: number
+import type { Coordinates, GeolocationErrorReason } from '@/types'
+
+export type Coords = Coordinates
+
+export class GeolocationError extends Error {
+  readonly reason: GeolocationErrorReason
+
+  constructor(reason: GeolocationErrorReason, message: string) {
+    super(message)
+    this.name = 'GeolocationError'
+    this.reason = reason
+  }
+}
+
+/**
+ * Request live device GPS coordinates via navigator.geolocation.
+ * Rejects with typed GeolocationError on unsupported, denied, timeout, or unavailable.
+ */
+export function getUserCoordinates(): Promise<Coordinates> {
+  return new Promise((resolve, reject) => {
+    if (typeof navigator === 'undefined' || !('geolocation' in navigator)) {
+      reject(
+        new GeolocationError(
+          'unsupported',
+          'Geolocation is not supported by your browser. Choose a market hub or enter a ZIP code.'
+        )
+      )
+      return
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        resolve({
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        })
+      },
+      (err) => {
+        if (err.code === 1) {
+          reject(
+            new GeolocationError(
+              'denied',
+              'Location permission was denied. Enable location access in browser settings or pick a market hub.'
+            )
+          )
+        } else if (err.code === 3) {
+          reject(
+            new GeolocationError(
+              'timeout',
+              'GPS request timed out. Check your signal and try again, or select a market hub.'
+            )
+          )
+        } else {
+          reject(
+            new GeolocationError(
+              'unavailable',
+              'Unable to determine your GPS position. Showing regional benchmark instead.'
+            )
+          )
+        }
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0,
+      }
+    )
+  })
 }
 
 /**

@@ -5,10 +5,26 @@ import { TickerData } from '@/types'
 
 interface TickerTapeProps {
   data: TickerData
+  locationLabel?: string
 }
 
-export default function TickerTape({ data }: TickerTapeProps) {
+function deriveRegionLabel(locationLabel?: string): string {
+  if (!locationLabel) return 'DENVER'
+  const lower = locationLabel.toLowerCase()
+  if (lower.includes('denver') || lower.includes('boulder')) return 'DENVER'
+  if (lower.includes('manhattan') || lower.includes('nyc') || lower.includes('brooklyn')) return 'MANHATTAN'
+  if (lower.includes('chicago')) return 'CHICAGO'
+  if (lower.includes('austin')) return 'AUSTIN'
+  if (lower.includes(', la') || lower.includes('los angeles') || lower.includes('hollywood') || lower.includes('beverly hills')) return 'LA'
+  if (lower.includes('seattle')) return 'SEATTLE'
+  if (lower.includes('miami')) return 'MIAMI'
+  if (lower.includes('national')) return 'NATIONAL'
+  return 'LOCAL'
+}
+
+export default function TickerTape({ data, locationLabel }: TickerTapeProps) {
   const [timeStr, setTimeStr] = useState('14:15 MT')
+  const [showSpreadInfo, setShowSpreadInfo] = useState(false)
 
   useEffect(() => {
     const updateTime = () => {
@@ -22,58 +38,52 @@ export default function TickerTape({ data }: TickerTapeProps) {
     return () => clearInterval(interval)
   }, [])
 
-  const tickerItem = (
-    <div className="flex items-center shrink-0 px-6 sm:px-8">
-      <span className="whitespace-nowrap">
-        DCX SPOT PRICE: ${data.spot_price_per_oz.toFixed(3)}/OZ{' '}
-        <span className={data.spot_direction === 'up' ? 'text-dc-crimson' : 'text-emerald-400'}>
-          {data.spot_direction === 'up' ? '▲' : '▼'}
-        </span>
-        <span className="mx-4 text-gray-500">//</span>
-      </span>
-      <span className="whitespace-nowrap">
-        DENVER AVG 12-PACK: ${data.avg_12pk.toFixed(2)}{' '}
-        <span className={data.avg_12pk_direction === 'up' ? 'text-dc-crimson' : 'text-emerald-400'}>
-          {data.avg_12pk_direction === 'up' ? '▲' : '▼'}
-        </span>
-        <span className="mx-4 text-gray-500">//</span>
-      </span>
-      <span className="whitespace-nowrap">
-        <span
-          title="Percentage cost reduction of fountain dispenser drinks compared to 20oz bottled soda"
-          className="cursor-help"
-        >
-          FOUNTAIN VS BOTTLE SPREAD: {data.fountain_spread_pct}%
-        </span>
-        <span className="mx-4 text-gray-500">//</span>
-      </span>
-      <span className="whitespace-nowrap">INDEX TICK: {timeStr}</span>
-    </div>
-  )
+  const regionLabel = deriveRegionLabel(locationLabel)
 
   return (
     <div
       role="region"
       aria-label="Diet Coke Market Ticker"
-      className="w-full bg-dc-black text-white py-2 overflow-hidden relative select-none"
+      className="w-full bg-dc-black text-white py-1.5 px-4 select-none"
     >
-      <div className="absolute left-0 top-0 bottom-0 w-12 sm:w-16 bg-gradient-to-r from-dc-black to-transparent z-10 pointer-events-none" />
-      <div className="absolute right-0 top-0 bottom-0 w-12 sm:w-16 bg-gradient-to-l from-dc-black to-transparent z-10 pointer-events-none" />
-
-      <div className="ticker-gradient">
-        <div
-          title="Hover or hold to pause live market ticker"
-          className="animate-ticker hover:[animation-play-state:paused] active:[animation-play-state:paused] focus-within:[animation-play-state:paused] flex font-body text-[11px] sm:text-xs uppercase tracking-[0.2em] font-medium cursor-grab active:cursor-grabbing"
+      <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-center gap-x-4 gap-y-1 font-mono tabular-nums text-xs uppercase tracking-[0.14em] font-medium">
+        <span>
+          DCX SPOT PRICE: ${data.spot_price_per_oz.toFixed(3)}/OZ{' '}
+          <span className={data.spot_direction === 'up' ? 'text-dc-ticker-up' : 'text-dc-ticker-down'}>
+            {data.spot_direction === 'up' ? '▲' : '▼'}
+          </span>
+        </span>
+        <span aria-hidden="true" className="text-gray-400 hidden sm:inline">//</span>
+        <span>
+          {regionLabel} AVG 12-PACK: ${data.avg_12pk.toFixed(2)}{' '}
+          <span className={data.avg_12pk_direction === 'up' ? 'text-dc-ticker-up' : 'text-dc-ticker-down'}>
+            {data.avg_12pk_direction === 'up' ? '▲' : '▼'}
+          </span>
+        </span>
+        <span aria-hidden="true" className="text-gray-400 hidden sm:inline">//</span>
+        <button
+          type="button"
+          aria-expanded={showSpreadInfo}
+          aria-controls="ticker-spread-info"
+          onClick={() => setShowSpreadInfo((prev) => !prev)}
+          className="inline-flex items-center gap-1.5 min-h-[44px] px-2 py-1 rounded text-xs font-mono uppercase tracking-[0.14em] text-gray-100 hover:text-white hover:bg-white/10 transition-colors cursor-pointer underline decoration-dotted underline-offset-4"
         >
-          {tickerItem}
-          <div className="flex items-center shrink-0 px-8" aria-hidden="true">
-            {tickerItem}
-          </div>
-          <div className="flex items-center shrink-0 px-8" aria-hidden="true">
-            {tickerItem}
-          </div>
-        </div>
+          <span>FOUNTAIN VS 20OZ BOTTLE: {data.fountain_spread_pct}%</span>
+          <span className="text-gray-300 text-[11px]" aria-hidden="true">
+            {showSpreadInfo ? '[−]' : '[?]'}
+          </span>
+        </button>
+        <span aria-hidden="true" className="text-gray-400 hidden sm:inline">//</span>
+        <span>INDEX TICK: {timeStr}</span>
       </div>
+      {showSpreadInfo && (
+        <div
+          id="ticker-spread-info"
+          className="max-w-6xl mx-auto pt-1.5 pb-1 text-center font-mono text-xs text-gray-200 border-t border-white/15"
+        >
+          Spot per-ounce price vs. the $1.75 / 12oz corner-store single can benchmark (or 20oz retail bottle spread inside THE BURN).
+        </div>
+      )}
     </div>
   )
 }

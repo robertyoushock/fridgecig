@@ -6,6 +6,46 @@
 
 export type PuristMode = 'anything' | 'can' | 'fountain'
 
+export interface Coordinates {
+  lat: number
+  lng: number
+}
+
+export interface MetroHub {
+  name: string
+  label: string
+  coords: Coordinates
+  zip: string
+}
+
+export interface ZipLookupEntry {
+  label: string
+  region: string
+  lat: number
+  lng: number
+}
+
+export interface ZipResolution {
+  zip: string
+  coords: Coordinates
+  label: string
+  hubKey: string
+  status: 'exact' | 'metro_estimate' | 'national_fallback'
+  warning: string | null
+}
+
+export type GeolocationErrorReason =
+  | 'unsupported'
+  | 'denied'
+  | 'timeout'
+  | 'unavailable'
+
+export type StashSource =
+  | 'kroger_live'
+  | 'fallback_directory'
+  | 'outside_kroger_region'
+  | 'local_directory'
+
 /** Single-serve immediate purchase result */
 export interface BurnResult {
   price: number
@@ -20,6 +60,15 @@ export interface BurnResult {
   apple_maps_url?: string
   google_maps_url?: string
   gold_standard?: boolean
+  vs_bottle_spread?: number
+  caffeine_mg?: number
+  runner_up?: {
+    store_name: string
+    size: string
+    price: number
+    formatted_price: string
+    unit_cost_per_oz: number
+  } | null
 }
 
 /** Individual bulk package format tier */
@@ -44,7 +93,7 @@ export interface BulkPackTier {
   is_best_unit_cost?: boolean
   min_units?: number              // e.g. 5 for buy-5 promo
   upfront_cost?: number           // e.g. 24.95
-  formatted_upfront?: string      // "$24.95 (5 Pk Req)" or "$13.00 (Single Case)"
+  formatted_upfront?: string      // "$24.95 (5 pks req)" or "$13.00 upfront"
 }
 
 /** Bulk stock-up deal result */
@@ -62,7 +111,10 @@ export interface StashResult {
   maps_url: string
   apple_maps_url?: string
   google_maps_url?: string
-  is_live_api?: boolean           // Live Kroger API or zip directory hydration
+  is_live_api?: boolean           // True ONLY on genuine live Kroger API response
+  source?: StashSource
+  coverage?: boolean
+  error?: string
   store_address?: string
   zip_code?: string
   last_updated?: string
@@ -96,4 +148,5 @@ export interface IndexData {
   stash: StashResult
   ticker: TickerData
   location_label: string
+  timestamp?: string
 }

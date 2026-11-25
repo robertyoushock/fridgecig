@@ -3,6 +3,94 @@
 // Curated chain pricing, bulk deals, and reference constants.
 // ═══════════════════════════════════════════════════════════════════
 
+import type { Coordinates, MetroHub, ZipLookupEntry } from '@/types'
+
+export const DENVER_DEFAULT_COORDS: Coordinates = {
+  lat: 39.7392,
+  lng: -104.9903,
+}
+
+export const NATIONAL_FALLBACK_COORDS: Coordinates = {
+  lat: 39.8283,
+  lng: -98.5795,
+}
+
+export const METRO_HUBS: Record<string, MetroHub> = {
+  denver: {
+    name: 'Denver',
+    label: 'Capitol Hill, Denver (80203)',
+    coords: { lat: 39.7392, lng: -104.9903 },
+    zip: '80203',
+  },
+  manhattan: {
+    name: 'Manhattan',
+    label: 'Midtown, Manhattan (10001)',
+    coords: { lat: 40.758, lng: -73.9855 },
+    zip: '10001',
+  },
+  chicago: {
+    name: 'Chicago',
+    label: 'Lincoln Park, Chicago (60614)',
+    coords: { lat: 41.8781, lng: -87.6298 },
+    zip: '60614',
+  },
+  austin: {
+    name: 'Austin',
+    label: 'East Austin, TX (78702)',
+    coords: { lat: 30.2672, lng: -97.7431 },
+    zip: '78702',
+  },
+  'los-angeles': {
+    name: 'Los Angeles',
+    label: 'Silver Lake, LA (90026)',
+    coords: { lat: 34.0522, lng: -118.2437 },
+    zip: '90026',
+  },
+  seattle: {
+    name: 'Seattle',
+    label: 'Capitol Hill, Seattle (98102)',
+    coords: { lat: 47.6062, lng: -122.3321 },
+    zip: '98102',
+  },
+  miami: {
+    name: 'Miami',
+    label: 'Wynwood, Miami (33127)',
+    coords: { lat: 25.7617, lng: -80.1918 },
+    zip: '33127',
+  },
+}
+
+export const ZIP_COORDS: Record<string, ZipLookupEntry> = {
+  '80203': { label: 'Capitol Hill, Denver (80203)', region: 'denver', lat: 39.7314, lng: -104.9729 },
+  '80218': { label: 'Capitol Hill / 9th Ave, Denver (80218)', region: 'denver', lat: 39.7314, lng: -104.9729 },
+  '80204': { label: 'Speer Blvd, Denver (80204)', region: 'denver', lat: 39.7368, lng: -104.9972 },
+  '80202': { label: 'LoDo / Union Station, Denver (80202)', region: 'denver', lat: 39.7569, lng: -104.9994 },
+  '80205': { label: 'Five Points, Denver (80205)', region: 'denver', lat: 39.7569, lng: -104.9994 },
+  '80206': { label: 'Cherry Creek, Denver (80206)', region: 'denver', lat: 39.7183, lng: -104.9542 },
+  '80210': { label: 'University / Wash Park (80210)', region: 'denver', lat: 39.6766, lng: -104.9592 },
+  '80220': { label: 'Monaco / Hilltop, Denver (80220)', region: 'denver', lat: 39.7008, lng: -104.9126 },
+  '80224': { label: 'Monaco, Denver (80224)', region: 'denver', lat: 39.7008, lng: -104.9126 },
+  '80033': { label: 'Wheat Ridge / West Denver (80033)', region: 'denver', lat: 39.7645, lng: -105.1412 },
+  '80211': { label: 'Highlands, Denver (80211)', region: 'denver', lat: 39.7645, lng: -105.02 },
+  '80301': { label: 'Boulder, CO (80301)', region: 'denver', lat: 40.0195, lng: -105.2536 },
+  '80302': { label: 'Downtown Boulder, CO (80302)', region: 'denver', lat: 40.0195, lng: -105.2736 },
+  '10001': { label: 'Midtown / Chelsea, NYC (10001)', region: 'manhattan', lat: 40.7484, lng: -73.9967 },
+  '10018': { label: 'Herald Square / Midtown, NYC (10018)', region: 'manhattan', lat: 40.758, lng: -73.9855 },
+  '11201': { label: 'Downtown Brooklyn, NY (11201)', region: 'manhattan', lat: 40.6958, lng: -73.988 },
+  '60614': { label: 'Lincoln Park, Chicago (60614)', region: 'chicago', lat: 41.9214, lng: -87.6513 },
+  '60601': { label: 'The Loop, Chicago (60601)', region: 'chicago', lat: 41.8853, lng: -87.6226 },
+  '78702': { label: 'East Austin, TX (78702)', region: 'austin', lat: 30.2672, lng: -97.7131 },
+  '78701': { label: 'Downtown Austin, TX (78701)', region: 'austin', lat: 30.2672, lng: -97.7431 },
+  '78704': { label: 'South Congress, Austin (78704)', region: 'austin', lat: 30.245, lng: -97.76 },
+  '90026': { label: 'Silver Lake / Echo Park, LA (90026)', region: 'los-angeles', lat: 34.0784, lng: -118.2606 },
+  '90028': { label: 'Hollywood, LA (90028)', region: 'los-angeles', lat: 34.1016, lng: -118.3268 },
+  '90210': { label: 'Beverly Hills, CA (90210)', region: 'los-angeles', lat: 34.0736, lng: -118.4004 },
+  '98102': { label: 'Capitol Hill, Seattle (98102)', region: 'seattle', lat: 47.6323, lng: -122.3216 },
+  '98101': { label: 'Downtown Seattle, WA (98101)', region: 'seattle', lat: 47.6101, lng: -122.3344 },
+  '33127': { label: 'Wynwood, Miami (33127)', region: 'miami', lat: 25.8042, lng: -80.1989 },
+  '33132': { label: 'Downtown Miami, FL (33132)', region: 'miami', lat: 25.7781, lng: -80.1873 },
+}
+
 export interface SizeEntry {
   size: string
   price: number
@@ -13,6 +101,7 @@ export interface StoreEntry {
   name: string
   sizes: SizeEntry[]
   type: 'mcdonalds' | 'gas_station' | 'convenience' | 'fast_food'
+  regions: string[]
 }
 
 export interface BulkDeal {
@@ -44,6 +133,7 @@ export const SINGLE_SERVE_MATRIX: Record<string, StoreEntry> = {
       { size: 'Large (30oz)', price: 1.49, oz: 30 },
     ],
     type: 'mcdonalds',
+    regions: ['national'],
   },
   'circle-k': {
     name: 'Circle K',
@@ -53,6 +143,20 @@ export const SINGLE_SERVE_MATRIX: Record<string, StoreEntry> = {
       { size: '20oz Bottle', price: 2.49, oz: 20 },
     ],
     type: 'gas_station',
+    regions: [
+      'denver',
+      'colorado',
+      'chicago',
+      'austin',
+      'texas',
+      'los-angeles',
+      'la',
+      'california',
+      'seattle',
+      'pacific-northwest',
+      'miami',
+      'florida',
+    ],
   },
   '7-eleven': {
     name: '7-Eleven',
@@ -62,6 +166,7 @@ export const SINGLE_SERVE_MATRIX: Record<string, StoreEntry> = {
       { size: '20oz Bottle', price: 2.69, oz: 20 },
     ],
     type: 'convenience',
+    regions: ['national'],
   },
   'wendys': {
     name: "Wendy's",
@@ -71,6 +176,7 @@ export const SINGLE_SERVE_MATRIX: Record<string, StoreEntry> = {
       { size: 'Large (42oz)', price: 2.89, oz: 42 },
     ],
     type: 'fast_food',
+    regions: ['national'],
   },
   'subway': {
     name: 'Subway',
@@ -80,6 +186,7 @@ export const SINGLE_SERVE_MATRIX: Record<string, StoreEntry> = {
       { size: '20oz Bottle', price: 2.89, oz: 20 },
     ],
     type: 'fast_food',
+    regions: ['national'],
   },
   'conoco': {
     name: 'Conoco',
@@ -87,6 +194,7 @@ export const SINGLE_SERVE_MATRIX: Record<string, StoreEntry> = {
       { size: '20oz Bottle', price: 2.79, oz: 20 },
     ],
     type: 'gas_station',
+    regions: ['denver', 'colorado', 'austin', 'texas', 'chicago'],
   },
   'kum-and-go': {
     name: 'Kum & Go',
@@ -94,6 +202,7 @@ export const SINGLE_SERVE_MATRIX: Record<string, StoreEntry> = {
       { size: '32oz Fountain', price: 1.29, oz: 32 },
     ],
     type: 'gas_station',
+    regions: ['denver', 'colorado'],
   },
   'wawa': {
     name: 'Wawa',
@@ -101,6 +210,7 @@ export const SINGLE_SERVE_MATRIX: Record<string, StoreEntry> = {
       { size: '24oz Fountain', price: 1.29, oz: 24 },
     ],
     type: 'convenience',
+    regions: ['miami', 'florida', 'philadelphia', 'dc'],
   },
   'sheetz': {
     name: 'Sheetz',
@@ -108,6 +218,7 @@ export const SINGLE_SERVE_MATRIX: Record<string, StoreEntry> = {
       { size: '32oz Fountain', price: 1.49, oz: 32 },
     ],
     type: 'convenience',
+    regions: ['philadelphia', 'dc'],
   },
   'racetrac': {
     name: 'RaceTrac',
@@ -115,6 +226,7 @@ export const SINGLE_SERVE_MATRIX: Record<string, StoreEntry> = {
       { size: '32oz Fountain', price: 1.09, oz: 32 },
     ],
     type: 'gas_station',
+    regions: ['austin', 'texas', 'miami', 'florida', 'atlanta'],
   },
   'bodega': {
     name: 'Bodega / Corner Store',
@@ -123,6 +235,7 @@ export const SINGLE_SERVE_MATRIX: Record<string, StoreEntry> = {
       { size: '12oz Can', price: 1.75, oz: 12 },
     ],
     type: 'convenience',
+    regions: ['national'],
   },
 }
 
@@ -138,7 +251,7 @@ export const BULK_DEALS: BulkDeal[] = [
     price: 4.99,
     cans: 12,
     oz_per_can: 12,
-    deal_badge: '🔥 BUY 5+ MULTI-PACK PROMO: $4.99/EA ($0.42/CAN)',
+    deal_badge: 'BUY 5+ MULTI-PACK PROMO: $4.99/EA ($0.42/CAN)',
     deal_desc: 'Must buy 5 or more (60 cans = $24.95)',
     effective_per_can: 0.42,
     min_units: 5,
@@ -153,7 +266,7 @@ export const BULK_DEALS: BulkDeal[] = [
     price: 13.00,
     cans: 24,
     oz_per_can: 12,
-    deal_badge: '🔥 SINGLE CASE PROMO ($0.54/can)',
+    deal_badge: 'SINGLE CASE PROMO ($0.54/can)',
     deal_desc: 'Weekly Shelf Promo ($13.00 / 24pk)',
     effective_per_can: 0.54,
     min_units: 1,
@@ -168,8 +281,8 @@ export const BULK_DEALS: BulkDeal[] = [
     price: 17.49,
     cans: 36,
     oz_per_can: 12,
-    deal_badge: '🏪 MEMBERS ONLY — CLUB BENCHMARK ($0.49/can)',
-    deal_desc: 'Costco Wholesale 36-Can Flat ($17.49 upfront)',
+    deal_badge: 'MEMBERS ONLY — CLUB BENCHMARK ($0.49/can)',
+    deal_desc: 'Costco Wholesale 36-Can Flat ($17.49\u00A0upfront)',
     effective_per_can: 0.49,
     min_units: 1,
     upfront_cost: 17.49,
@@ -200,7 +313,7 @@ export const BULK_DEALS: BulkDeal[] = [
     price: 16.99,
     cans: 36,
     oz_per_can: 12,
-    deal_badge: '🏪 MANHATTAN BULK ALPHA ($0.47/can)',
+    deal_badge: 'MANHATTAN BULK ALPHA ($0.47/can)',
     deal_desc: 'Manhattan Island Bulk Wholesale',
     effective_per_can: 0.47,
     min_units: 1,
@@ -215,7 +328,7 @@ export const BULK_DEALS: BulkDeal[] = [
     price: 5.99,
     cans: 12,
     oz_per_can: 12,
-    deal_badge: '🍎 NYC CIRCLE REBATE: 3 FOR $18 ($0.50/can)',
+    deal_badge: 'NYC CIRCLE REBATE: 3 FOR $18 ($0.50/can)',
     deal_desc: '3 for $18 with Target Circle',
     effective_per_can: 0.50,
     min_units: 3,
@@ -232,7 +345,7 @@ export const BULK_DEALS: BulkDeal[] = [
     price: 11.99,
     cans: 24,
     oz_per_can: 12,
-    deal_badge: '🔥 JEWEL JUST FOR U: $11.99 ($0.50/can)',
+    deal_badge: 'JEWEL JUST FOR U: $11.99 ($0.50/can)',
     deal_desc: 'Just For U Digital Coupon',
     effective_per_can: 0.50,
     min_units: 1,
@@ -247,7 +360,7 @@ export const BULK_DEALS: BulkDeal[] = [
     price: 4.99,
     cans: 12,
     oz_per_can: 12,
-    deal_badge: '🔥 BUY 5+ MULTI-PACK PROMO ($0.42/can)',
+    deal_badge: 'BUY 5+ MULTI-PACK PROMO ($0.42/can)',
     deal_desc: 'Must buy 5 or more (60 cans = $24.95)',
     effective_per_can: 0.42,
     min_units: 5,
@@ -264,7 +377,7 @@ export const BULK_DEALS: BulkDeal[] = [
     price: 4.99,
     cans: 12,
     oz_per_can: 12,
-    deal_badge: '🌴 SOCAL RALPHS CLUB PROMO ($0.42/can)',
+    deal_badge: 'SOCAL RALPHS CLUB PROMO ($0.42/can)',
     deal_desc: 'Buy 5 or More Savings',
     effective_per_can: 0.42,
     min_units: 5,
@@ -279,7 +392,7 @@ export const BULK_DEALS: BulkDeal[] = [
     price: 13.49,
     cans: 24,
     oz_per_can: 12,
-    deal_badge: '🔥 SINGLE CASE PROMO ($0.56/can)',
+    deal_badge: 'SINGLE CASE PROMO ($0.56/can)',
     deal_desc: 'Weekly Shelf Promo',
     effective_per_can: 0.56,
     min_units: 1,
@@ -296,7 +409,7 @@ export const BULK_DEALS: BulkDeal[] = [
     price: 4.78,
     cans: 12,
     oz_per_can: 12,
-    deal_badge: '🤠 HEB LONE STAR PROMO ($0.40/can)',
+    deal_badge: 'HEB LONE STAR PROMO ($0.40/can)',
     deal_desc: 'Combo Loco Multi-Buy',
     effective_per_can: 0.40,
     min_units: 4,
@@ -313,7 +426,7 @@ export const BULK_DEALS: BulkDeal[] = [
     price: 4.99,
     cans: 12,
     oz_per_can: 12,
-    deal_badge: '🌲 PACNW ADVANTAGE CARD PROMO ($0.42/can)',
+    deal_badge: 'PACNW ADVANTAGE CARD PROMO ($0.42/can)',
     deal_desc: 'Buy 5 or more Mix & Match',
     effective_per_can: 0.42,
     min_units: 5,
@@ -330,7 +443,7 @@ export const BULK_DEALS: BulkDeal[] = [
     price: 5.33,
     cans: 12,
     oz_per_can: 12,
-    deal_badge: '☀️ PUBLIX B2G1 PROMO ($0.44/can)',
+    deal_badge: 'PUBLIX B2G1 PROMO ($0.44/can)',
     deal_desc: 'Buy 2 Get 1 Free (36 Cans = $15.98)',
     effective_per_can: 0.44,
     min_units: 3,
@@ -362,8 +475,8 @@ export const BULK_DEALS: BulkDeal[] = [
     price: 17.49,
     cans: 36,
     oz_per_can: 12,
-    deal_badge: '🏪 MEMBERS ONLY — CLUB BENCHMARK ($0.49/can)',
-    deal_desc: 'Costco Wholesale Club Flat ($17.49 upfront)',
+    deal_badge: 'MEMBERS ONLY — CLUB BENCHMARK ($0.49/can)',
+    deal_desc: 'Costco Wholesale Club Flat ($17.49\u00A0upfront)',
     effective_per_can: 0.49,
     min_units: 1,
     upfront_cost: 17.49,

@@ -3,6 +3,10 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    color-scheme: light;
+  }
+
   body {
     min-height: 100vh;
     min-height: 100dvh;
@@ -14,6 +18,11 @@
     padding-right: env(safe-area-inset-right);
   }
 
+  input,
+  textarea {
+    caret-color: #B30F20;
+  }
+
   ::selection {
     background-color: #e31837;
     color: #ffffff;
@@ -22,15 +31,23 @@
   a, button {
     -webkit-tap-highlight-color: transparent;
   }
+
+  :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+    outline: 3px solid #9E0B1B;
+    outline-offset: 2px;
+    box-shadow: 0 0 0 2px #ffffff;
+  }
 }
 
-.glass-card {
-  background: rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  border-radius: 1rem;
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.07), 0 4px 6px -4px rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.6);
+@layer components {
+  .glass-card {
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 1rem;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.07), 0 4px 6px -4px rgba(0, 0, 0, 0.05), inset 0 1px 0 0 rgba(255, 255, 255, 0.6);
+  }
 }
 
 .ticker-gradient {
@@ -38,14 +55,81 @@
   -webkit-mask-image: linear-gradient(90deg, transparent 0%, black 8%, black 92%, transparent);
 }
 
+@keyframes ticker {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-ticker {
+  animation: ticker 40s linear infinite;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes scale-up {
+  from {
+    opacity: 0;
+    transform: scale(0.94) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.motion-fade-in {
+  animation: fade-in 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.motion-scale-in {
+  animation: scale-in 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.motion-scale-up {
+  animation: scale-up 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .motion-fade-in,
+  .motion-scale-in,
+  .motion-scale-up {
+    animation-name: fade-in;
+    animation-duration: 120ms;
+    animation-timing-function: ease-out;
+  }
+
+  .animate-pulse {
+    animation: none !important;
+    opacity: 0.75 !important;
+  }
+
+  .animate-spin,
+  .animate-ping,
   .animate-ticker {
     animation: none !important;
     transform: none !important;
-  }
-  .animate-shimmer {
-    animation: none !important;
-    opacity: 0.2 !important;
   }
 }
 
