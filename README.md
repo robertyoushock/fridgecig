@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/images/hero.png" alt="The Diet Coke Index interface on desktop and mobile" width="100%">
+  <img src="showcase/fridgecig.webp" alt="The Diet Coke Index interface on desktop and mobile" width="100%">
 </p>
 
 # The Diet Coke Index
@@ -21,7 +21,10 @@ The retail beverage market is wildly inefficient. You walk into the wrong bodega
 
 ## The Burn vs. The Stash
 
-<img src="docs/images/terminal.png" alt="The Diet Coke Index desktop view showing The Burn and The Stash cards side by side">
+<p align="center">
+  <img src="showcase/fridgecig-burn.webp" alt="The Burn card showing immediate single-serve Diet Coke relief" width="49%">
+  <img src="showcase/fridgecig-stash.webp" alt="The Stash card showing bulk pack arbitrage" width="49%">
+</p>
 
 One screen. Zero fluff. One tap for coordinates. Two immediate financial decisions:
 
@@ -34,7 +37,7 @@ Color and type hierarchy are immediate: massive athletic grotesque numbers (**An
 
 ## The Apex Predator: McDonald's 34°F Closed-Loop Schematic
 
-<img src="docs/images/schematic.png" alt="McDonald's Gold Standard Closed-Loop Schematic Modal">
+<img src="showcase/fridgecig-schematic.webp" alt="McDonald's Gold Standard Closed-Loop Schematic Modal">
 
 Whenever McDonald's is identified within striking distance, the index badges it as **The Gold Standard**. Tapping the schematic button surfaces an interactive technical blueprint explaining why McDonald's fountain Diet Coke hits differently:
 
