@@ -31,7 +31,7 @@ One screen. Zero fluff. One tap for coordinates. Two immediate financial decisio
 - **THE BURN (Immediate Relief):** Finds the lowest unit-cost cold single-serve within walking distance right now. Shows distance, walking time, unit cost ($/fl oz), and deep-links directly to turn-by-turn directions.
 - **THE STASH (Bulk Arbitrage):** The Wall Street breakdown for fridge-loading. Calculates your **Unit Cost per Can**, **Caffeine Yield ($/mg)**, and **Bodega Single Spread (-85%)**, including regional runner-up promotions.
 
-Color and type hierarchy are immediate: massive athletic grotesque numbers (**Anton**) dominate the viewport, supported by high-contrast labels and tabular numerals (**Inter**) set against a brushed anodized aluminum surface.
+Color and type hierarchy are immediate: massive athletic grotesque numbers (**Anton**) dominate the viewport, supported by high-contrast labels (**Inter**) and tabular terminal metrics (**JetBrains Mono**) set against a brushed anodized aluminum surface.
 
 ---
 
@@ -52,8 +52,8 @@ Whenever McDonald's is identified within striking distance, the index badges it 
 
 The interface isn't flat glass; it feels like cold metal in your hand:
 
-- **Condensation Droplets:** Interactive SVG droplets anchored to the surface with dual white specular highlights, refractive caustic glow, and drop shadows. Tapping any droplet triggers a synthesized bubble pop sound effect and wipes clean.
-- **Pull-Tab Sound Engine:** When coordinates are locked or refreshed, a zero-latency Web Audio procedural synthesizer simulates the mechanical aluminum tab fracture and fizzy hiss.
+- **Condensation Droplets:** Interactive SVG droplets anchored to the surface with dual white specular highlights, refractive caustic glow, and drop shadows. Tapping any droplet triggers a synthesized bubble pop sound effect and wipes clean (with a **Wipe All** control in the status bar).
+- **Pull-Tab Sound Engine:** When coordinates are locked or refreshed, a gesture-deferred Web Audio procedural synthesizer simulates the mechanical aluminum tab fracture and fizzy hiss (with a persistent `[M]` mute toggle).
 - **Haptic Feedback:** Native mobile vibration triggers a crisp tactile pop on supported devices.
 
 ---
@@ -64,7 +64,7 @@ In the supermarket retail market, 12-pack bundles often beat 24-packs on pure un
 - **12-PACK:** Best unit cost promo specials ($4.99/pk with $24.95 upfront requirement).
 - **24-PACK:** Single-case low friction shelf option ($13.00 single case).
 - **COSTCO 36-PK:** Wholesale club bulk flat benchmark ($17.49 club flat).
-- **Interactive Routing:** Tapping any tier immediately updates driving directions in Apple Maps or Google Maps.
+- **Interactive Routing:** Selecting any tier updates the card comparison and unit economics in place, and the stateful **Open In: Apple Maps / Google Maps** toggle sets your preferred turn-by-turn routing app on the primary CTA.
 
 ---
 
@@ -80,5 +80,8 @@ npm run dev
 # Compile static edge export
 npm run build
 ```
+
+### Cloudflare Worker (`worker/`)
+Live Kroger / King Soopers pricing in Colorado is served through `fridgecig-kroger-proxy` (`worker/src/index.ts`), with a regional Colorado guard so out-of-region requests (e.g., NYC) cleanly fall back to local baselines. See `worker/README.md` for `wrangler` deployment and secret setup.
 
 See `AGENT_CONTEXT.md` for full architectural documentation, formulas, and edge cases.
